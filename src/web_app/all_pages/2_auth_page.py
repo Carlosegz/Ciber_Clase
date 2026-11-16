@@ -8,7 +8,7 @@ import qrcode
 import pyotp
 import numpy as np
 # Librerías Locales
-import db_helpers as db
+import db_helpers as db # type: ignore
 
 # Inicializamos un Par de Llaves
 if "current_user" not in st.session_state:
@@ -19,10 +19,10 @@ if "auth_stage" not in st.session_state:
 using_mockup_db = st.session_state.get("using_mockup_db",True)
 
 # Definimos la Conexión a la Base de Datos
-get_user = db.pg_get_user if using_mockup_db else  db.mock_get_user
-create_user = db.pg_create_user  if using_mockup_db else db.mock_create_user # type: ignore
-enable_2fa = db.pg_enable_2fa   if using_mockup_db else db.mock_enable_2fa
-disable_2fa = db.pg_disable_2fa  if using_mockup_db else db.mock_disable_2fa
+get_user = db.pg_get_user if not using_mockup_db else  db.mock_get_user
+create_user_db = db.pg_create_user  if not using_mockup_db else db.mock_create_user # type: ignore
+enable_2fa = db.pg_enable_2fa   if not using_mockup_db else db.mock_enable_2fa
+disable_2fa = db.pg_disable_2fa  if not using_mockup_db else db.mock_disable_2fa
 
 # Funciones de Ayuda
 # Función para Obtener el Bytes del Código QR
@@ -107,15 +107,15 @@ def initial_login():
 
         # Creamos el Botón de Ingreso
         with st.container(horizontal_alignment="center"):
-            ingresar_cuenta = st.button(
-                label="🫂Ingresar a Cuenta",
-                type="primary",
-                disabled= not credentials_fill,
-            )
             # Creamos Botón para Registrar cuenta
             registrar_cuenta = st.button(
                 type="tertiary",
                 label="Quiero crear una cuenta",
+            )
+            ingresar_cuenta = st.button(
+                label="🫂Ingresar a Cuenta",
+                type="primary",
+                disabled= not credentials_fill,
             )
 
         # Validamos si se quiere registrar una cuenta
@@ -141,7 +141,55 @@ def initial_login():
 
 # Creación de Usuario
 def create_user():
-    pass
+    st.header("🥸 Creación de Cuenta de Usuario")
+    st.caption("Que no se te olviden tus credenciales ;)")
+
+    with st.container(width=600):
+        # Ponemos Inputs de Correo y Contraseña
+        correo = st.text_input(
+            label="**📨 Correo**",
+            type="email",
+            placeholder="admin@1234.com",
+            value=None,
+            width="stretch"
+        )
+        st.caption("Asegurate de poner el correo con el que iniciaste sesión no? Jjasjasjsa")
+        contra_user = st.text_input(
+            label="**🗝️ Contraseña**",
+            type="password",
+            placeholder="Ej: lacontraseñaescontraseña",
+            value=None,
+            width="stretch"
+        )
+
+        if contra_user == "1234":
+            st.error("Esta contraseña ya la usa el Admin 😡")
+            st.stop()
+        elif contra_user == "contraseña":
+            st.success("La mejor contraseñá es contraseña 😁")
+
+        # Verificamos que ambos inputs esten con datos
+        credentials_fill = not((correo is None) or (contra_user is None))
+
+        # Creamos el Botón de Ingreso
+        with st.container(horizontal_alignment="center"):
+            registrar_cuenta = st.button(
+                label="🫂Registrar la Cuenta",
+                type="primary",
+                disabled= not credentials_fill,
+                width="stretch"
+            )
+
+
+        # Validamos Credenciales y Usuario
+        if registrar_cuenta and credentials_fill:
+            # Guardamos el Usuario
+            create_user_db(email = correo, plain_password = contra_user)
+            # Guardamos el usuario y Ponemos Fase de Iniciar OTP
+            st.session_state["current_user"] = correo
+            st.session_state["auth_stage"] = "setup_otp"
+            # Por último hacemos un st.rerun
+            st.rerun()
 
 # Construir OTP
 def setup_otp():
@@ -156,7 +204,7 @@ def setup_otp():
 
     # Creamos el OTP
     if not ("temp_secret" in st.session_state):
-        st.session_state["tempo_secret"] = pyotp.random_base32()
+        st.session_state["temp_secret"] = pyotp.random_base32()
 
     secret = st.session_state.temp_secret
     totp = pyotp.TOTP(secret) # type: ignore

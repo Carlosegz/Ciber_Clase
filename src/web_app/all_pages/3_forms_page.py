@@ -4,7 +4,7 @@ from time import sleep
 # Librerías de Terceros
 import streamlit as st
 # Librerías Locales
-import db_helpers as db
+import db_helpers as db # type: ignore
 
 # Obtenemos los Parámetros 
 query_params = st.query_params
@@ -30,23 +30,39 @@ nombre_user = st.text_input("🫂Ingresa tu Nombre")
 
 # Ahora Tarjetas de Crédito
 with st.container(height=300,vertical_alignment="bottom", border=True):
-    st.code(
-        st.session_state.get("card-code","0000 0000 0000 0000")
-    )
+    st.header("#️⃣Datos de tu Tarjeta de Crédito")
+
+    # Input de Número y Vencimiento
+    colNum, colVenc = st.columns([3,1])
+    with colNum:
+        st.caption("**💳Número de Tarjeta**")
+        st.code(st.session_state.get("card-code","0000 0000 0000 0000"))
+    with colVenc:
+        st.caption("**📅Fecha de Vencimiento**")
+        st.code(st.session_state.get("fecha-venc","12/31"))
+
+    # Input de Código y Nombre
+    colCod, colNombre = st.columns([1,3])
+    with colCod:
+        st.caption("**🗝️Código del CVC**")
+        st.code(st.session_state.get("cvc-code","313"))
+    with colNombre:
+        st.caption("**📨Nombre de la Tarjeta**")
+        st.code(st.session_state.get("name-code","ANDRES GUSTAVO ROJAS PINILLA").title())
 
 # Input de Número y Vencimiento
-colNum, colVenc = st.columns([5,1])
+colNum, colVenc = st.columns([3,1])
 with colNum:
     codigo_card = st.text_input("💳Número de Tarjeta",key="card-code")
 with colVenc:
-    vencimiento_card = st.text_input("📅Fecha de Vencimiento")
+    vencimiento_card = st.text_input("📅Fecha de Vencimiento",key="fecha-venc")
 
 # Input de Código y Nombre
 colCod, colNombre = st.columns([1,3])
 with colCod:
-    cvc_card = st.text_input("🗝️Código del CVC")
+    cvc_card = st.text_input("**🗝️Código del CVC**",key="cvc-code",max_chars=3)
 with colNombre:
-    nombre_card = st.text_input("📨Nombre de la Tarjeta")
+    nombre_card = st.text_input("**📨Nombre de la Tarjeta**",key="name-code")
 
 # Ahora Color Favorito
 st.space("medium")
@@ -71,7 +87,7 @@ validator_dict = {
     "CVC Tarjeta": cvc_card,
     "Nombre Tarjeta": nombre_card,
     "Color Favorito": color_fav,
-    "Celebridades Preferidas": "".join(celebridades_preferidas)
+    "Celebridades Preferidas": ",".join(celebridades_preferidas)
 }
 # Definimos si los datos están listos para subir
 faltan_por_llenar = []
@@ -109,8 +125,7 @@ if st.session_state.get("forms_ya_subido",False):
     csv_forms = st.session_state.data_csv
     # Lo Mostramos
     with st.expander("Datos del Formulario", expanded=True):
-        with st.container(height=500):
-            st.dataframe(df_forms)
+        st.dataframe(df_forms)
 
     # Creamos el Botón de Descarga
     st.download_button(
