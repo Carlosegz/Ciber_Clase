@@ -219,7 +219,7 @@ def setup_otp():
     uri = totp.provisioning_uri(name=st.session_state["current_user"], issuer_name="Ciber-Clase-OTP")
 
     # Mostramos el QR
-    st.image(generate_qr_code(uri), use_container_width=True)
+    st.image(generate_qr_code(uri), width="stretch")
     st.caption("Te dejamos también el código manual por si lo deseas")
     st.code(secret, language="text")
 
