@@ -1,11 +1,9 @@
 import streamlit as st
 
 all_pages = [
-    st.Page("all_pages/1_landing_page.py", title="Home"),
-    st.Page("all_pages/2_auth_page.py", title="Sign Up/Sign In"),
-    st.Page("all_pages/3_A_page.py", title="Equipo A"),
-    st.Page("all_pages/4_B_page.py", title="Equipo B"),
-    st.Page("all_pages/5_C_page.py", title="Equipo Chat"),
+    st.Page("all_pages/1_landing_page.py", title="Inicio", icon="➿"),
+    st.Page("all_pages/2_auth_page.py", title="Inicio de Sesión", icon="♻️"),
+    st.Page("all_pages/3_forms_page.py", title="Forms de Obtención de Datos", visibility="hidden", icon="👌"),
 ]
 
 def main() -> None:

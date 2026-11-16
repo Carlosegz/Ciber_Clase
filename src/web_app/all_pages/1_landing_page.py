@@ -15,23 +15,26 @@ st.set_page_config(
 # Main section
 st.title("➿ Bienvenidos al Ciber-Proyecto")
 st.markdown(
-    ""
+    "> **Hecho por**: Carlos Guayambuco, Camilo Puentes y Jesus Figueroa"
 )
 
 st.write("""
-At **Site**, we believe in innovation, creativity, and connection.
-Explore our world and discover how we can grow your MONEY together.
+Este es un sitio simple para explorar la autenticación usando un método de 2FA como lo es la configuración de OTPs
 """)
 
-if st.button("🚀 Sign Up/Sign In"):
-    st.success("Thanks for visiting! We’re excited to have you here.")
+if st.button("🚀 Iniciar Sesión", type="primary"):
+    st.success("Dirigiendosé a la autenticación ;D")
+    sleep(1)
 
     st.switch_page("all_pages/2_auth_page.py")
     st.stop()
 
+st.caption("Es una muy buena idea iniciar sesión ;)")
+
 # Footer
-st.markdown("---")
+st.divider()
 st.markdown(
-    "<p style='text-align: center;'>© 2025 Nuu | All rights reserved.</p>",
+    ">© 2026 Ciberseguridad | Sin Derechos Registrados :(",
     unsafe_allow_html=True,
+    text_alignment="center"
 )
