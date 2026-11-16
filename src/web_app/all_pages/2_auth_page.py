@@ -126,7 +126,7 @@ def initial_login():
         # Validamos Credenciales y Usuario
         if ingresar_cuenta and credentials_fill:
             user_creds = get_user(email=correo) # type: ignore
-            if not(user_creds is None) and db.verify_password(plain_password=contra_user, password_hash=user.get("password_hash")): # type: ignore
+            if not(user_creds is None) and db.verify_password(plain_password=contra_user, password_hash=user_creds.get("password_hash")): # type: ignore
                 # Guardamos el usuario
                 st.session_state["current_user"] = correo
                 # 2 Posibles Caminos: Verificar OTP o Registrar OTP
@@ -137,10 +137,18 @@ def initial_login():
 
                 # Por último hacemos un st.rerun
                 st.rerun()
+            else:
+                st.error("Esa no es la info del Inicio de Sesión ;D")
 
 
 # Creación de Usuario
 def create_user():
+
+    # Ponemos Botón para volver a Login
+    if st.button("⏬Volver a Inicio de Sesión"):
+        st.session_state.auth_stage = "login"
+        st.rerun()
+
     st.header("🥸 Creación de Cuenta de Usuario")
     st.caption("Que no se te olviden tus credenciales ;)")
 
@@ -208,7 +216,7 @@ def setup_otp():
 
     secret = st.session_state.temp_secret
     totp = pyotp.TOTP(secret) # type: ignore
-    uri = totp.provisioning_uri(name=st.session_state["current_user"], issuer_name="StreamlitPostgresApp")
+    uri = totp.provisioning_uri(name=st.session_state["current_user"], issuer_name="Ciber-Clase-OTP")
 
     # Mostramos el QR
     st.image(generate_qr_code(uri), use_container_width=True)
@@ -224,11 +232,12 @@ def setup_otp():
     if my_otp_code is None:
         st.stop()
 
-    # Verifcamos la cantidad de intentos que lleva
-    curr_atts = st.session_state.get("attempted_otp",0)
+    # Inicializamos los Intentos con 0
+    if not "attempted_otp" in st.session_state:
+        st.session_state["attempted_otp"] = 0
 
     # Si lleva >= 3 Intentos se espera a modo de "procesamiento"
-    if curr_atts == 3:
+    if st.session_state["attempted_otp"] == 3:
         better_timing()
         # Reinicamos los intentos
         st.session_state["attempted_otp"] = 0
@@ -239,9 +248,9 @@ def setup_otp():
         type="primary"
     ):
         if totp.verify(my_otp_code, valid_window=2):
-            enable_2fa(email=st.session_state["current_user"],secret=st.session_state["tempo_secret"])
+            enable_2fa(email=st.session_state["current_user"],secret=st.session_state["temp_secret"])
             # Eliminamos el Secreto 
-            del st.session_state["tempo_secret"]
+            del st.session_state["temp_secret"]
             # Cambiamos la Vista a la del Formulario
             st.session_state["auth_stage"] = "show_forms"
             # Re-ejecutamos el App
@@ -285,6 +294,10 @@ def verify_otp():
     if my_otp_code is None:
         st.stop()
 
+    # Inicializamos los Intentos con 0
+    if not "attempted_otp" in st.session_state:
+        st.session_state["attempted_otp"] = 0
+
     # Verifcamos la cantidad de intentos que lleva
     curr_atts = st.session_state.get("attempted_otp",0)
 
@@ -299,10 +312,7 @@ def verify_otp():
         label="😒Verificar Código",
         type="primary"
     ):
-        if totp.verify(my_otp_code, valid_window=2):
-            enable_2fa(email=st.session_state["current_user"],secret=st.session_state["tempo_secret"])
-            # Eliminamos el Secreto 
-            del st.session_state["tempo_secret"]
+        if totp.verify(my_otp_code, valid_window=1):
             # Cambiamos la Vista a la del Formulario
             st.session_state["auth_stage"] = "show_forms"
             # Re-ejecutamos el App
@@ -311,6 +321,7 @@ def verify_otp():
             st.error("Hmmm seguro que no es {:06d}? Puede ser ;)".format(
                 (int(my_otp_code) + 1) if my_otp_code.isnumeric() else int(np.random.randint(low=0,high=1_000_000))
             ))
+            st.warning(f"🛠️ **Debug — Server Expected OTP:** `{totp.now()}` (Secret: `{user_creds['totp_secret']}`)")
             # Agregamos un Intento
             st.session_state["attempted_otp"] += 1
 

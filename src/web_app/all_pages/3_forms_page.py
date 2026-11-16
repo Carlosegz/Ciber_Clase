@@ -25,8 +25,7 @@ st.caption("Tu información esta segura (`se supone`)")
 usando_mockup = st.toggle("😁Usar Base de Datos Mockup", value=True)
 
 # Vamos a Mostrar por el Momento 3 Inputs:
-# Nombre Completo, Numeros de Tarjeta de Crédito, Color Favorito y Personalidades a las que apoyas
-nombre_user = st.text_input("🫂Ingresa tu Nombre")
+# Numeros de Tarjeta de Crédito, Color Favorito y Personalidades a las que apoyas
 
 # Ahora Tarjetas de Crédito
 with st.container(height=300,vertical_alignment="bottom", border=True):
@@ -101,17 +100,18 @@ if faltan_por_llenar:
     ))
 
 # Mostramos el Botón de Subida
-if st.button("⏬Subir Información del Forms", disabled=(len(faltan_por_llenar) > 0) or st.session_state.get("forms_ya_subido",False), type="primary"):
+key_ya_subido = "forms_ya_subido_{}".format(st.session_state["current_user"])
+if st.button("⏬Subir Información del Forms", disabled=(len(faltan_por_llenar) > 0) or st.session_state.get(key_ya_subido,False), type="primary"):
     # Definimos la Función a usar
     upload_forms = db.mock_add_form_upload if usando_mockup else db.pg_add_form_upload
     # La aplicamos
     if upload_forms(email=st.session_state["current_user"], dict_result=validator_dict):
         st.success("Forms Subido con Éxito", icon="✅")
-        st.session_state["forms_ya_subido"] = True
+        st.session_state[key_ya_subido] = True
         sleep(1)
         st.rerun()
 
-if st.session_state.get("forms_ya_subido",False):
+if st.session_state.get(key_ya_subido,False):
     st.info("Ya subiste el formulario, por lo que puedes descargar la Info 😁")
     # Definimos la Función a Usar
     download_forms_info = db.mock_obtain_forms_data if usando_mockup else db.pg_obtain_forms_data
@@ -138,3 +138,11 @@ if st.session_state.get("forms_ya_subido",False):
 
 else:
     st.warning("Para descargar la Info tienes que subir el Formulario",icon="⚠️")
+
+# Agregamos botón de Cerrar sesión
+if st.button("Cerrar Sesión",key="close-session-forms"):
+    st.session_state.auth_stage = "login"
+    st.session_state.current_user = None
+    st.session_state.pop("temp_secret", None)
+    # Vamos a la Página de Inicio
+    st.switch_page("all_pages/1_landing_page.py")
