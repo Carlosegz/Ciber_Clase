@@ -191,6 +191,11 @@ def create_user():
 
         # Validamos Credenciales y Usuario
         if registrar_cuenta and credentials_fill:
+            # Verificamos que el Usuario no exista
+            user_db = get_user(email=correo)
+            if not(user_db is None):
+                st.error("Ya existe un usuario para ese correo", icon="😡")
+                st.stop()
             # Guardamos el Usuario
             create_user_db(email = correo, plain_password = contra_user)
             # Guardamos el usuario y Ponemos Fase de Iniciar OTP
